@@ -125,7 +125,7 @@ pub struct Instr {
     pub op_str: String,
 
     /// Detail of this instuction.
-    pub detail: Option<Details>,
+    pub detail: Option<Box<Details>>,
 }
 
 impl Instr {
@@ -188,7 +188,7 @@ impl Instr {
             op_str.push((instr.op_str[i] as u8) as char);
         }
 
-        let detail = if decode_detail {
+        let detail = if decode_detail && !instr.detail.is_null() {
             let detail = unsafe { *instr.detail };
             let arch_union = detail.__bindgen_anon_1;
 
@@ -230,12 +230,12 @@ impl Instr {
                 groups.push(detail.groups[i as usize] as u32);
             }
 
-            Some(Details {
+            Some(Box::new(Details {
                 regs_read,
                 regs_write,
                 groups,
                 arch,
-            })
+            }))
         } else {
             None
         };
@@ -249,6 +249,10 @@ impl Instr {
             op_str,
             detail,
         }
+    }
+
+    pub fn detail(&self) -> Option<&Details> {
+        self.detail.as_ref().map(Box::as_ref)
     }
 }
 
